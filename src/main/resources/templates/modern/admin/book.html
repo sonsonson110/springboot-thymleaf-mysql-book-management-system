@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add book</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+            crossorigin="anonymous"></script>
+</head>
+<style>
+    .image-container {
+            width: 100%;
+            height: 400px;
+            border: 1px dashed #ccc;
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            border-radius: 3px;
+        }
+        .image-preview {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            width: auto;
+            height: auto;
+        }
+        html, body {
+            min-height: 100%;
+        }
+</style>
+<body class="container" style="background-color: #FAF9F6">
+
+<form id="form" th:object="${book}" th:action="@{/book/save}" th:method="${bookId} < 0 ? post:put" enctype="multipart/form-data">
+    <input type="hidden" name="id" th:value="${book.id}">
+    <input type="hidden" name="da_ban" th:value="${book.da_ban}">
+    <input type="hidden" name="bia_sach" th:value="${book.bia_sach}">
+
+    <div style="padding: 30px" class="card mt-5 mb-2 shadow">
+        <div class="row">
+            <div class="col-sm p-2">
+                <div class="card-title">
+                    <h2>Thông tin sách</h2>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label>Tiêu đề*</label>
+                        <input type="text" class="form-control input-field" name="tieu_de" th:value="${book.tieu_de}"
+                               required>
+                    </div>
+                    <div class="col-md-6">
+                        <label>Tác giả*</label>
+                        <input type="text" class="form-control input-field" name="tac_gia" th:value="${book.tac_gia}"
+                               required>
+                    </div>
+                </div>
+
+                <div th:if="${error}" class="alert alert-danger mt-2" role="alert">
+                    <span th:text="${error}"></span>
+                </div>
+
+                <label for="mo_ta">Mô tả:</label>
+                <textarea type="text" id="mo_ta" class="form-control input-field" rows="8" name="mo_ta"
+                          th:text="${book.mo_ta}"></textarea>
+
+                <div class="row my-2">
+                    <div class="col-md-6">
+                        <label>Ngày phát hành*</label>
+                        <input type="date" class="form-control input-field" name="ngay_ph" th:value="${book.ngay_ph}"
+                               required>
+                    </div>
+                    <div class="col-md-6">
+                        <label>Số trang:</label>
+                        <input type="number" class="form-control input-field" name="so_trang"
+                               th:value="${book.so_trang}" min="0">
+                    </div>
+                </div>
+
+                <label>Thể loại:</label>
+                <select class="form-select" th:field="*{the_loai}">
+                    <option value="" selected>--Chọn thể loại--</option>
+                    <option value="Khoa học">Khoa học</option>
+                    <option value="Văn học">Văn học</option>
+                    <option value="Trinh thám">Trinh thám</option>
+                    <option value="Tiểu thuyết">Tiểu thuyết</option>
+                </select>
+            </div>
+
+
+            <div class="col-sm p-2">
+                <div class="d-flex flex-column">
+                    <div style="margin: 0 8em 1em 8em" class="align-items-center justify-content-center">
+                        <label>Chọn ảnh</label>
+                        <input type="file" id="file-upload" name="image" accept="image/*" class="form-control">
+                    </div>
+                    <div class="p-2 align-self-center image-container">
+                        <img class="image-preview" id="image-preview"
+                             th:src="@{/images/{bia_sach} (bia_sach = ${book.bia_sach})}">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-secondary">
+        <input value="Add" type="submit" id="submit-button" class="btn btn-primary mb-3" style="float: right"/>
+    </footer>
+</form>
+<div class="modal fade" id="exampleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Thông báo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Xác nhận lưu sách vào hệ thống?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Huỷ</button>
+                <button type="button" class="btn btn-primary" id="confirm-button">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+        // Xử lý sự kiện khi chọn file ảnh
+        document.getElementById('file-upload').addEventListener('change', function () {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('image-preview').setAttribute('src', e.target.result);
+            }
+            reader.readAsDataURL(this.files[0]);
+        });
+
+
+</script>
+<script th:inline="javascript">
+/*<![CDATA[*/
+      // Kiểm tra giá trị của id và cập nhật nút "Submit" và trường nhập liệu tương ứng
+      var bookId = Number([[${bookId}]]);
+      var submitButton = document.getElementById('submit-button');
+      var inputFields = document.querySelectorAll('.input-field');
+      var selectField = document.querySelector('.form-select');
+      var fileInput = document.getElementById('file-upload');
+      var canSubmit = false;
+
+      if (bookId >= 0) {
+        submitButton.value = "Edit";
+        inputFields.forEach(function (field) {
+          field.disabled = true;
+        });
+        selectField.disabled = true;
+        fileInput.disabled = true;
+      }
+
+      // Xử lý sự kiện khi bấm nút "Edit"
+      submitButton.addEventListener('click', function (event) {
+        if (submitButton.value === "Edit") {
+          submitButton.value = "Save";
+          inputFields.forEach(function (field) {
+            field.disabled = false;
+          });
+          selectField.disabled = false;
+          fileInput.disabled = false;
+          canSubmit = false; // Không cho phép submit form khi ở chế độ Edit
+        } else { canSubmit = true; }
+      });
+
+      // Ngăn chặn submit form
+      document.querySelector('form').addEventListener('submit', function (event) {
+        event.preventDefault();
+        var form = document.querySelector("#form");
+        if (canSubmit) {
+            let myModal = new bootstrap.Modal(document.getElementById('exampleModal'));
+            myModal.show();
+        }
+      });
+/*]]>*/
+</script>
+<script>
+    // Lấy phần tử button xác nhận trong modal
+    var confirmBtn = document.querySelector("#confirm-button");
+
+    // Xử lý sự kiện khi bấm nút xác nhận
+    confirmBtn.addEventListener("click", function(event) {
+        // Gọi phương thức POST của form
+        var form = document.querySelector("form");
+        form.submit();
+    });
+</script>
+</html>
